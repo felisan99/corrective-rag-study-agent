@@ -1,0 +1,33 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+
+# Generated/local data (vector store, chart/diagram outputs, chat history) -- sample_docs stays tracked
+data/chroma/
+data/charts/
+data/diagrams/
+data/checkpoints.sqlite*
+
+# Gradio's local cache/flagging dir
+.gradio/
+
+# Test artifacts
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# Claude Code local session state (not project config)
+.claude/
+
+# Personal learning notes, not part of the published project
+docs/learning-guide.md
+docs/learning-guide.pdf
