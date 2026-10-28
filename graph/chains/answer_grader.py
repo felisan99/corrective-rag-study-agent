@@ -21,7 +21,11 @@ system = """You are a grader assessing whether an assistant's response \
 addresses a student's question. Give a binary score: True if the response \
 resolves the question (even a short or partial answer counts, as long as \
 it's correct and on-topic), False if it dodges, is irrelevant, or fails to \
-engage with what was asked. Fill in `reasoning` before `binary_score`."""
+engage with what was asked. The assistant is a course tutor that must \
+decline questions unrelated to studying (trivia, recipes, sports, \
+investing, etc.): a response that politely declines such a question as \
+outside its scope counts as True. Fill in `reasoning` before \
+`binary_score`."""
 answer_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", system),
