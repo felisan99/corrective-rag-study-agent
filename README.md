@@ -1,209 +1,139 @@
-# Study Platform Agent
+# Corrective RAG Study Agent
 
-A LangGraph agent for a study platform: students ask questions about material
-their teacher uploaded, and the agent answers using retrieval-augmented
-generation over that material, falls back to web search when the material
-doesn't cover something, self-corrects answers that aren't grounded, and can
-generate diagrams/charts to explain concepts visually.
+**A LangGraph tutoring agent that answers from a teacher's own course material, falls back to the web only when the material runs out, checks its own answers for hallucinations before the student sees them, and draws charts and diagrams when a picture explains better than text.**
 
-This project consolidates concepts from a LangGraph course (ReAct tool-calling
-agents, corrective RAG, reflexion-style self-correction) into a single,
-extended, real system rather than five separate exercises -- built with
-Claude instead of the course's OpenAI models, plus persistence, a
-configurable model, and visualization tools that weren't part of the course.
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![LangGraph](https://img.shields.io/badge/LangGraph-1.2-1C3C3C?logo=langchain&logoColor=white)
+![Claude](https://img.shields.io/badge/Claude-Sonnet%205%20%2B%20Haiku%204.5-D97757?logo=anthropic&logoColor=white)
+![Chroma](https://img.shields.io/badge/Vector%20DB-Chroma-FF6446)
+![Gradio](https://img.shields.io/badge/UI-Gradio-F97316?logo=gradio&logoColor=white)
+![Eval](https://img.shields.io/badge/end--to--end%20eval-18%2F20-2EA44F)
 
-## Architecture
-
-```
-entry -> agent_reason -> should_continue? --tool_calls--> act -> agent_reason (loop)
-                                          \--no tool_calls--> grade_response
-grade_response --grounded & answers question--> END
-grade_response --fails, retries < MAX--> agent_reason (with a critique injected)
-grade_response --fails, retries >= MAX--> END (best-effort answer)
-```
-
-- **`agent_reason` <-> `act`** -- a ReAct tool-calling loop (`langgraph.prebuilt.ToolNode`).
-  The agent has four tools: `search_course_materials`, `web_search`,
-  `generate_diagram`, `generate_chart`.
-- **`search_course_materials`** -- retrieves from a per-course Chroma
-  collection, then grades each chunk's relevance with `retrieval_grader`
-  before handing anything to the agent (corrective RAG). This is what lets
-  the agent tell "the course doesn't cover this" apart from "I searched
-  wrong," and decide to fall back to `web_search`.
-- **`grade_response`** -- once the agent stops calling tools, its draft
-  answer is checked for groundedness (`hallucination_grader`, against the
-  whole conversation so far -- tool results *and* anything the student
-  already said) and relevance (`answer_grader`). A failing answer is sent
-  back to `agent_reason` with an injected critique, capped at a couple of
-  retries so it can't loop forever. Implemented with LangGraph's `Command`
-  API (a node picks its own next node + state update, no
-  `add_conditional_edges` needed for this transition).
-- **Persistence** -- `main.py` compiles the graph with a `SqliteSaver`
-  checkpointer keyed by `thread_id` (`data/checkpoints.sqlite`), so a
-  conversation survives restarting the CLI. `graph/graph.py`'s `app` (no
-  checkpointer) is the one-off version used by tests and scripts.
-
-## Setup
-
-```bash
-uv sync
-```
-
-`generate_diagram` renders diagrams with [Graphviz](https://graphviz.org/),
-which needs its `dot` binary installed system-wide (the `graphviz` Python
-package alone isn't enough):
-
-```bash
-brew install graphviz        # macOS
-apt install graphviz         # Debian/Ubuntu
-```
-
-Fill in `.env` (already scaffolded with placeholders):
-
-```
-ANTHROPIC_API_KEY=...
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_API_KEY=...      # optional, for LangSmith tracing
-LANGCHAIN_PROJECT=...
-TAVILY=...                 # Tavily API key, for web_search
-```
-
-Embeddings run locally (`sentence-transformers/all-MiniLM-L6-v2`, downloaded
-once on first use) -- no embeddings API key needed.
-
-## Usage
-
-Ingest a teacher's document into a course's corpus (a demo document already
-exists at `data/sample_docs/cs101_binary_search_trees.md`):
-
-```bash
-uv run python -m ingestion.ingest --course cs101 --file data/sample_docs/cs101_binary_search_trees.md --teacher "Demo Teacher"
-```
-
-Chat with the agent:
-
-```bash
-uv run python main.py --course cs101
-uv run python main.py --course cs101 --thread exam-review   # resume a named conversation
-```
-
-Optionally swap the main agent's model (default `claude-sonnet-5`; graders
-always use the cheaper `claude-haiku-4-5`) to compare cost/quality yourself:
-
-```bash
-STUDY_AGENT_MODEL=claude-haiku-4-5 uv run python main.py --course cs101
-```
-
-## Web UI (Gradio)
-
-A small [Gradio](https://www.gradio.dev/) app sits on top of the same
-compiled graph as `main.py` -- same SQLite checkpoint file, so a CLI session
-and a UI session on the same course/thread share history.
-
-```bash
-uv run python -m ui.app
-```
-
-This opens a local server (default `http://127.0.0.1:7860`) with two tabs:
-
-- **Study Chat** -- set a course ID and thread ID, then chat with the agent.
-  "New conversation" starts a fresh thread ID without losing past ones (press
-  Enter in the Thread ID field to switch back to an old one -- its history
-  reloads from the checkpoint). Charts the agent generates render inline as
-  images; diagrams render as a plain code block (no live diagram rendering
-  yet -- see Limitations).
-- **Teacher: Ingest Material** -- upload a `.pdf`/`.txt`/`.md` file, set a
-  course ID (and optionally a teacher name), and ingest it -- the same
-  `ingestion.ingest.ingest()` function the CLI (`python -m ingestion.ingest`)
-  and the test suite use.
-
-| Study Chat | Chart generated inline | Teacher ingestion |
+| Study chat | Chart generated by the agent | Teacher ingestion |
 |---|---|---|
 | ![Study chat](docs/screenshots/chat.png) | ![Chart example](docs/screenshots/chart-example.png) | ![Ingestion tab](docs/screenshots/ingest.png) |
 
-## Usage guide (end to end)
+## Results
 
-1. `uv sync`, fill in `.env`, then `uv run python -m ui.app`.
-2. Open the app in your browser, go to **Teacher: Ingest Material**, upload
-   `data/sample_docs/cs101_binary_search_trees.md` with course ID `cs101`,
-   and click **Ingest**.
-3. Switch to **Study Chat** and ask something the material covers, e.g.
-   *"What is the time complexity of searching a balanced binary search
-   tree?"* -- the agent answers from `search_course_materials`.
-4. Ask something the material doesn't cover, e.g. *"What year was Python
-   first released?"* -- the agent falls back to `web_search`.
-5. Ask for a visual, e.g. *"Generate a bar chart comparing O(log n) and O(n)
-   growth for n = 10, 100, 1000, 10000"* or *"Draw a diagram of how BST
-   insertion works"* -- the agent calls `generate_chart`/`generate_diagram`.
-6. Click **New conversation** to start a fresh thread, or press Enter in the
-   Thread ID field with an earlier id to resume it (its history reloads into
-   the chat window) -- history persists across UI and CLI restarts via
-   `data/checkpoints.sqlite`.
+Measured with an end-to-end eval ([`eval/`](eval/)): 20 student questions run through the real graph (real Claude calls, real web search, real chart rendering), with deterministic checks on which tools were called and what the final answer says.
 
-## Testing
+| Metric | Baseline | After fixes |
+|---|---|---|
+| **Cases passing all checks** | 16/20 | **18/20** |
+| Answers from course material, no web search (`in_course`) | 6/8 | **7/8** |
+| Falls back to the web when the material doesn't cover it (`web_fallback`) | 4/4 | 3/4 |
+| Declines off-topic questions without leaking the answer (`off_topic`) | 2/4 | **4/4** |
+| Renders a chart or diagram when asked (`visual`) | 4/4 | 4/4 |
+| Cost per question (agent + all graders) | $0.048 | **$0.043** |
+| Cost of an off-topic question | $0.032 | **$0.012** (-62%) |
+| Latency, median / p95 | 15.8 s / 42.8 s | 18.5 s / 38.9 s |
 
-```bash
-uv run pytest
+Raw per-case results (answers, tool calls, token usage) are in [`eval/results/`](eval/results/).
+
+### What the eval caught
+
+The first run surfaced four problems no unit test would have found:
+
+1. **A tool-name mismatch.** The system prompt told the model to use `web_search`, but `TavilySearch` registers itself as `tavily_search`. The model coped by guessing, but the prompt was describing a tool that didn't exist. Fixed by pinning the name.
+2. **Answering from memory instead of the course.** For "easy" questions (*"what's the complexity of searching a balanced BST?"*) the agent skipped retrieval and answered from its own knowledge, and the groundedness grader let it through. For a tutor this is a real bug: the teacher's material is the source of truth. Fixed in the system prompt; the cost is the small latency increase above.
+3. **The self-correction loop made off-topic leaks worse.** When the agent correctly declined *"what's the capital of Australia?"*, the answer grader scored the refusal as "doesn't address the question", and the critique told the agent to *search again*. It then searched the web and answered "Canberra" on the second try. Fixed by teaching the answer grader that a scoped refusal is a valid answer. Off-topic questions now end after a single agent turn instead of two revision rounds.
+4. **Two bugs in the eval itself** (the tool name, and a regex that rejected `2 · log(n)`). The baseline was re-scored offline with `--rescore`, so the numbers above compare like with like and the original failures stay in the result file.
+
+The two remaining failures are judgment calls, left unfixed on purpose. In one, the agent put the explanation inside a generated diagram instead of the text. In the other, it asked the student a clarifying question before searching the web, which its prompt allows for broad questions.
+
+## How it works
+
+```mermaid
+flowchart LR
+    Q([Student question]) --> A[agent_reason<br/>Claude Sonnet 5]
+    A -- tool calls --> T[act<br/>ToolNode]
+    T --> A
+    A -- draft answer --> G{grade_response<br/>Claude Haiku 4.5}
+    G -- grounded and on-topic --> E([Answer])
+    G -- fails, retries < 2 --> A
+    G -- fails, retries = 2 --> E
+
+    T -.-> S[search_course_materials<br/>Chroma + relevance grader]
+    T -.-> W[web_search<br/>Tavily]
+    T -.-> D[generate_diagram<br/>Graphviz]
+    T -.-> C[generate_chart<br/>matplotlib]
 ```
 
-`tests/test_chains.py` ingests the sample doc into an isolated `test-bst`
-collection and exercises each grader chain against real Claude calls (no
-mocking, same as the course's original tests) -- expect it to make a handful
-of live API calls. `tests/test_graph.py` is a fast structural check with no
-API calls.
+- **ReAct loop.** `agent_reason` and `act` loop until the model stops calling tools. Four tools: course search, web search, diagram and chart.
+- **Corrective RAG.** `search_course_materials` retrieves from a per-course Chroma collection, then a Haiku grader drops irrelevant chunks before the agent sees them. That way the agent can tell "the course doesn't cover this" apart from "I searched badly", and knows when to fall back to the web.
+- **Reflexion-style self-correction.** Before an answer is returned, `grade_response` checks it for groundedness (against tool results *and* what the student said earlier) and for relevance. A failing draft goes back to the agent with a critique, capped at 2 retries. Routing uses LangGraph's `Command` API: the node chooses its own next step.
+- **Course isolation.** `course_id` reaches the tools through `InjectedState`, never as a model argument, so the model can't query another course's material.
+- **Persistence.** A `SqliteSaver` checkpointer keyed by `thread_id` lets conversations survive restarts and be shared between the CLI and the web UI.
+- **Robustness.** Tool exceptions become error messages instead of crashing the graph. Dangling `tool_use` blocks from interrupted runs are patched before every call, so a killed process can't corrupt a thread forever. Embedding calls are serialized, because parallel tool calls into the shared model segfaulted.
+
+## Quickstart
+
+Requires [`uv`](https://docs.astral.sh/uv/), Python 3.12 and [Graphviz](https://graphviz.org/) (`brew install graphviz` / `apt install graphviz`).
+
+```bash
+uv sync
+cp .env.example .env          # ANTHROPIC_API_KEY, TAVILY (+ optional LangSmith)
+
+# Ingest the demo course material
+uv run python -m ingestion.ingest --course cs101 \
+    --file data/sample_docs/cs101_binary_search_trees.md --teacher "Demo Teacher"
+
+uv run python -m ui.app                       # web UI on http://127.0.0.1:7860
+uv run python main.py --course cs101          # or the CLI
+```
+
+To try the four behaviours in the UI:
+
+| Ask | Expected behaviour |
+|---|---|
+| *What is the time complexity of searching a balanced BST?* | Answers from the course material |
+| *Who invented the AVL tree?* | Course search finds nothing relevant, so it falls back to web search |
+| *Plot O(log n) vs O(n) for n = 10, 100, 1000* | Renders a chart inline |
+| *What's the capital of Australia?* | Declines as out of scope |
+
+The main model can be swapped to compare cost and quality (the graders always use Haiku):
+
+```bash
+STUDY_AGENT_MODEL=claude-haiku-4-5 uv run python -m ui.app
+```
+
+## Evaluation and tests
+
+```bash
+uv run python -m eval.run_eval                         # 20 cases, ~US$0.90, ~7 min
+uv run python -m eval.run_eval --only off-capital      # one case
+uv run python -m eval.run_eval --rescore eval/results/<run>.json   # re-check a saved run, no API calls
+
+uv run pytest tests/test_graph.py                      # structural graph tests, no API calls
+uv run pytest tests/test_chains.py                     # grader chains against real Claude calls
+```
+
+The eval ingests the sample material into an isolated `eval-cs101` collection, so it never touches real course data. Cases live in [`eval/cases.yaml`](eval/cases.yaml); each one states which tools must or must not be called and which regexes the answer must or must not contain.
 
 ## Project structure
 
 ```
 graph/
-  state.py            AgentState (MessagesState + course_id, retry_count, current_question)
-  graph.py            builds the StateGraph
-  persistence.py       SqliteSaver checkpointer
-  nodes/
-    agent.py           agent_reason node + tool binding
-    grade_response.py  self-correction node
-  tools/
-    course_search.py   search_course_materials (retrieval + grading)
-    web_search.py       Tavily
-    visualize.py         generate_diagram (Graphviz) / generate_chart (matplotlib)
-  chains/
-    retrieval_grader.py
-    hallucination_grader.py
-    answer_grader.py
-ingestion/
-  vectorstore.py        per-course Chroma collections
-  ingest.py             teacher-facing ingestion CLI
-ui/
-  app.py                 Gradio demo (chat + teacher ingestion tabs)
-data/
-  sample_docs/          tracked demo course material
-  chroma/, charts/, diagrams/, checkpoints.sqlite   generated, gitignored
+  graph.py               StateGraph wiring
+  state.py               AgentState (messages + course_id, retry_count, current_question)
+  persistence.py         SqliteSaver checkpointer
+  nodes/agent.py         agent_reason: system prompt, tool binding, dangling tool-call repair
+  nodes/grade_response.py  self-correction node (Command-based routing)
+  tools/                 course_search (CRAG), web_search (Tavily), visualize (Graphviz / matplotlib)
+  chains/                retrieval, hallucination and answer graders (structured output)
+ingestion/               per-course Chroma collections + teacher ingestion CLI (.pdf/.txt/.md)
+ui/app.py                Gradio app: study chat + teacher ingestion tabs
+eval/                    end-to-end eval: cases, runner, saved results
+tests/                   structural graph tests + live grader tests
 ```
 
-## Scope and known limitations
+## Design notes and limitations
 
-- **Teacher side is intentionally minimal**: ingestion is a local CLI script,
-  not a web upload flow. No auth, no multi-user accounts. Generating new
-  content (practice questions, study guides) for teachers is future scope.
-- **Web UI is a thin demo layer**: the Gradio app (`ui/app.py`) is a
-  presentation layer over the same graph, not a production frontend --
-  single-process, no auth, no multi-user session isolation beyond the
-  course/thread IDs typed into the form. A real frontend (FastAPI + SPA)
-  would sit on top of the same graph without changing it.
-- **Diagrams show as static images, not interactively**: `generate_diagram`
-  renders a real PNG via Graphviz (same idea as `generate_chart`'s
-  matplotlib PNGs), not an editable/zoomable diagram. An earlier version
-  returned raw Mermaid text for the agent to paste into its reply, hoping
-  Gradio's Chatbot (which does ship `mermaid.js`) would render it -- it
-  never did for messages appended dynamically during a chat turn (confirmed
-  via the browser devtools: no error, it just never ran), and the agent was
-  also unreliable at copying multi-line code verbatim. Rendering to an image
-  server-side sidesteps both problems.
-- **LangGraph Studio (`langgraph dev`)** isn't wired up in this environment:
-  its in-memory dev server needs to compile a package
-  (`langgraph-runtime-inmem` -> `blockbuster` -> `forbiddenfruit`) from
-  source, which a global `no-build=true` uv policy blocks here. Options if
-  you want it later: allow builds in `uv.toml` and run
-  `uv add "langgraph-cli[inmem]"`, or use `langgraph up` (Docker-based) via
-  the existing `langgraph.json`. LangSmith tracing (already configured)
-  gives full visibility into every node/tool call in the meantime.
+- **Two models, two jobs.** Sonnet runs the multi-step tool orchestration; the cheap, frequent grading calls (one per retrieved chunk, two per draft) run on Haiku.
+- **Local embeddings.** `all-MiniLM-L6-v2` runs on CPU, so embedding needs no API key.
+- **Small eval.** 20 cases over one short document is enough to catch regressions and systematic bugs like the ones above, not to estimate rates precisely: one case is 5 points. The 18/20 is measured on the same cases that guided the fixes, so it is optimistic by construction.
+- **Lenient groundedness grader.** In the final run, 20/20 first drafts passed self-correction. The eval found ungrounded answers the grader accepted, so treat the grader as a safety net, not a guarantee.
+- **Demo-grade UI.** Single process, no auth. The graph is UI-agnostic, so a production frontend (FastAPI + SPA) could sit on top without changing it.
+- **Static diagrams.** Diagrams are rendered server-side to PNG. Mermaid inside Gradio's chat never rendered for messages streamed mid-turn, and the model was unreliable at copying multi-line diagram source verbatim.
+
+Built with Claude through `langchain-anthropic`, traced with LangSmith during development.

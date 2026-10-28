@@ -1,7 +1,7 @@
 [project]
 name = "study-langgraph-project"
 version = "0.1.0"
-description = "Add your description here"
+description = "LangGraph corrective-RAG tutoring agent with self-correction, web fallback and visual explanations"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
