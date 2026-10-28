@@ -1,0 +1,138 @@
+# End-to-end eval cases for the study agent, run against the sample course
+# (data/sample_docs/cs101_binary_search_trees.md) ingested into an isolated
+# `eval-cs101` collection.
+#
+# Fields:
+#   category        in_course | web_fallback | off_topic | visual
+#   question        the student's message
+#   expect_tools    every tool listed here must be called at least once
+#   forbid_tools    none of these may be called
+#   must_match      regexes (case-insensitive) that must all appear in the final answer
+#   must_not_match  regexes that must not appear in the final answer
+
+# --- Answerable from the course material: retrieve, never go to the web ---
+- id: in-balanced-search
+  category: in_course
+  question: What is the time complexity of searching a balanced binary search tree?
+  expect_tools: [search_course_materials]
+  forbid_tools: [web_search]
+  must_match: ['O\(\s*log\s*n\s*\)']
+
+- id: in-sorted-insertion
+  category: in_course
+  question: What happens to the running time of BST operations if keys are inserted in already-sorted order?
+  expect_tools: [search_course_materials]
+  forbid_tools: [web_search]
+  must_match: ['O\(\s*n\s*\)']
+
+- id: in-delete-two-children
+  category: in_course
+  question: When deleting a BST node that has two children, what value replaces the deleted node's value?
+  expect_tools: [search_course_materials]
+  forbid_tools: [web_search]
+  must_match: ['in-?order successor']
+
+- id: in-inorder-traversal
+  category: in_course
+  question: What does an in-order traversal of a binary search tree produce?
+  expect_tools: [search_course_materials]
+  forbid_tools: [web_search]
+  must_match: ['sorted']
+
+- id: in-avl-rebalance
+  category: in_course
+  question: How does an AVL tree decide when it needs to rebalance?
+  expect_tools: [search_course_materials]
+  forbid_tools: [web_search]
+  must_match: ['balance factor|height difference']
+
+- id: in-rb-vs-avl
+  category: in_course
+  question: According to the course notes, why do standard libraries like C++ std::map use red-black trees instead of AVL trees?
+  expect_tools: [search_course_materials]
+  forbid_tools: [web_search]
+  must_match: ['fewer rotations']
+
+- id: in-insert-leaf
+  category: in_course
+  question: Where does a new node get attached when inserting into a BST?
+  expect_tools: [search_course_materials]
+  forbid_tools: [web_search]
+  must_match: ['leaf']
+
+- id: in-rb-height
+  category: in_course
+  question: What bound do red-black trees put on the tree's height, according to the course material?
+  expect_tools: [search_course_materials]
+  forbid_tools: [web_search]
+  must_match: ['2\s*[*·×]?\s*log']
+
+# --- On-topic but not covered by the material: corrective RAG must fall back to the web ---
+- id: web-avl-inventors
+  category: web_fallback
+  question: Who invented the AVL tree, and in what year was it published?
+  expect_tools: [search_course_materials, web_search]
+  must_match: ['Adelson|Landis', '1962']
+
+- id: web-btree-databases
+  category: web_fallback
+  question: Why do databases use B-trees for indexes instead of binary search trees?
+  expect_tools: [search_course_materials, web_search]
+  must_match: ['disk|page|block']
+
+- id: web-splay-tree
+  category: web_fallback
+  question: What is a splay tree and how does it differ from an AVL tree?
+  expect_tools: [search_course_materials, web_search]
+  must_match: ['splay']
+
+- id: web-treap
+  category: web_fallback
+  question: What is a treap and how does it stay balanced?
+  expect_tools: [search_course_materials, web_search]
+  must_match: ['heap|priorit']
+
+# --- Off-topic: the tutor must decline instead of answering or searching ---
+- id: off-world-cup
+  category: off_topic
+  question: Who won the 2022 FIFA World Cup?
+  forbid_tools: [web_search]
+  must_not_match: ['Argentina']
+
+- id: off-cookies
+  category: off_topic
+  question: Can you give me a recipe for chocolate chip cookies?
+  forbid_tools: [web_search]
+  must_not_match: ['flour', 'butter']
+
+- id: off-capital
+  category: off_topic
+  question: What's the capital of Australia?
+  forbid_tools: [web_search]
+  must_not_match: ['Canberra']
+
+- id: off-stock
+  category: off_topic
+  question: Should I buy Nvidia stock this week?
+  forbid_tools: [web_search]
+
+# --- Visual explanations: the agent must render a real chart/diagram ---
+- id: vis-growth-chart
+  category: visual
+  question: Generate a bar chart comparing O(log n) and O(n) growth for n = 10, 100, 1000, 10000.
+  expect_tools: [generate_chart]
+
+- id: vis-insert-diagram
+  category: visual
+  question: Draw a diagram of how inserting the key 7 into a BST with root 10, left child 5 and right child 15 works.
+  expect_tools: [generate_diagram]
+
+- id: vis-delete-diagram
+  category: visual
+  question: Make a diagram showing the three cases of deleting a node from a BST.
+  expect_tools: [generate_diagram]
+
+- id: vis-comparisons-chart
+  category: visual
+  question: Plot a chart of how many comparisons a search needs in a balanced vs a degenerate BST for n = 16, 256 and 4096.
+  expect_tools: [generate_chart]

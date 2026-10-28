@@ -1,0 +1,883 @@
+{
+  "summary": {
+    "agent_model": "claude-sonnet-5",
+    "cases": 20,
+    "passed": "16/20",
+    "by_category": {
+      "in_course": "6/8",
+      "off_topic": "2/4",
+      "visual": "4/4",
+      "web_fallback": "4/4"
+    },
+    "first_draft_accepted": "16/20",
+    "revisions_triggered": 6,
+    "latency_median_s": 15.8,
+    "latency_p95_s": 42.8,
+    "cost_per_query_usd": 0.048,
+    "cost_total_usd": 0.96
+  },
+  "results": [
+    {
+      "id": "in-balanced-search",
+      "category": "in_course",
+      "question": "What is the time complexity of searching a balanced binary search tree?",
+      "passed": false,
+      "failures": [
+        "expected tool not called: search_course_materials"
+      ],
+      "tools_called": [],
+      "revisions": 0,
+      "latency_s": 6.2,
+      "cost_usd": 0.01377,
+      "usage": {
+        "claude-sonnet-5": {
+          "input_tokens": 4305,
+          "output_tokens": 182,
+          "total_tokens": 4487,
+          "input_token_details": {
+            "cache_read": 0,
+            "cache_creation": 0,
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_token_details": {
+            "reasoning": 0
+          }
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 277,
+          "input_tokens": 1957,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 2234
+        }
+      },
+      "answer": "The time complexity of searching a balanced binary search tree is **O(log n)**, where n is the number of nodes.\n\nQuick intuition: in a balanced BST, each comparison at a node lets you discard roughly half of the remaining subtree (go left or right), similar to binary search in a sorted array. Since the tree's height is ~log₂(n) when balanced, that's the max number of comparisons needed to find a node (or determine it's absent).\n\nWant me to walk through an example search step by step, or explain why an *unbalanced* BST can degrade to O(n)?"
+    },
+    {
+      "id": "in-sorted-insertion",
+      "category": "in_course",
+      "question": "What happens to the running time of BST operations if keys are inserted in already-sorted order?",
+      "passed": false,
+      "failures": [
+        "answer missing /O\\(\\s*n\\s*\\)/"
+      ],
+      "tools_called": [
+        "search_course_materials",
+        "generate_diagram"
+      ],
+      "revisions": 0,
+      "latency_s": 22.2,
+      "cost_usd": 0.05299,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 1179,
+          "input_tokens": 15472,
+          "output_token_details": {
+            "reasoning": 99
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 16651
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 672,
+          "input_tokens": 6899,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 7571
+        }
+      },
+      "answer": "Here's the diagram: `data/diagrams/balanced-bst-vs-degenerate-bst-sorted-insertion-dbde1430.png`\n\nOn the left, inserting keys in a mixed order (3, 1, 4, 2, 5) naturally produces a balanced tree with branching on both sides. On the right, inserting the same keys but already sorted (1, 2, 3, 4, 5) produces a tree where every node only has a right child — effectively a linked list.\n\nThis is exactly why your course material mentions **self-balancing BST variants** (like AVL trees or red-black trees) — they exist specifically to guarantee O(log n) operations regardless of insertion order, by automatically restructuring the tree to avoid this kind of degeneration. Want to dig into how one of those balancing schemes works?"
+    },
+    {
+      "id": "in-delete-two-children",
+      "category": "in_course",
+      "question": "When deleting a BST node that has two children, what value replaces the deleted node's value?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials"
+      ],
+      "revisions": 0,
+      "latency_s": 12.13,
+      "cost_usd": 0.0297,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 210,
+          "input_tokens": 9155,
+          "output_token_details": {
+            "reasoning": 28
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 9365
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 622,
+          "input_tokens": 6181,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 6803
+        }
+      },
+      "answer": "According to your course material: when deleting a BST node with two children, you replace its value with its **in-order successor** — the smallest value in its right subtree. After copying that value up, you then delete the successor node itself (which has at most one child, so that deletion is simple).\n\nA quick check: do you know why the in-order successor is guaranteed to have at most one child, or want me to walk through that?"
+    },
+    {
+      "id": "in-inorder-traversal",
+      "category": "in_course",
+      "question": "What does an in-order traversal of a binary search tree produce?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials"
+      ],
+      "revisions": 0,
+      "latency_s": 14.24,
+      "cost_usd": 0.03296,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 368,
+          "input_tokens": 9459,
+          "output_token_details": {
+            "reasoning": 38
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 9827
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 752,
+          "input_tokens": 6599,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 7351
+        }
+      },
+      "answer": "An in-order traversal of a BST (visit left subtree → node → right subtree, recursively) produces **all the keys in sorted ascending order**.\n\nThis falls directly out of the BST property: at every node, everything in the left subtree is smaller and everything in the right subtree is larger. So if you always fully explore left before visiting the node itself, and the node before its right subtree, you end up emitting keys from smallest to largest.\n\nOne handy consequence: this gives you a quick way to check whether a tree actually satisfies the BST invariant — if an in-order traversal ever produces a sequence that isn't strictly increasing, the tree isn't a valid BST.\n\nWant me to walk through a small example tree and trace the traversal step by step, or do you already have that part down and want to go deeper (e.g. how it compares to pre-order/post-order)?"
+    },
+    {
+      "id": "in-avl-rebalance",
+      "category": "in_course",
+      "question": "How does an AVL tree decide when it needs to rebalance?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials"
+      ],
+      "revisions": 0,
+      "latency_s": 18.46,
+      "cost_usd": 0.03557,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 657,
+          "input_tokens": 9270,
+          "output_token_details": {
+            "reasoning": 164
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 9927
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 752,
+          "input_tokens": 6696,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 7448
+        }
+      },
+      "answer": "An AVL tree makes its rebalancing decision based on something called the **balance factor** of each node.\n\n**Balance factor** = height(left subtree) − height(right subtree)\n\nFor the tree to be considered \"AVL-balanced,\" every node's balance factor must be **-1, 0, or 1**. \n\nHere's how it works in practice:\n\n1. **After every insertion or deletion**, the tree walks back up from the modified node toward the root (since only ancestors of the changed node could have had their subtree heights affected).\n2. At each ancestor, it recalculates the balance factor.\n3. If a node's balance factor becomes **-2 or +2** (i.e., one side is now two levels taller than the other), that node is considered unbalanced, and a **rotation** is performed to restore balance.\n4. The *type* of rotation (single left, single right, left-right, or right-left) depends on whether the imbalance is on the left or right side, and whether the \"heavy\" child itself leans left or right.\n\nSo the trigger condition is purely about height difference: as soon as |balance factor| > 1 at any node, that's the signal to rebalance.\n\nQuick check — are you comfortable with how the four rotation cases (LL, RR, LR, RL) are chosen based on the balance factor pattern, or would it help to walk through an example insertion that triggers one?"
+    },
+    {
+      "id": "in-rb-vs-avl",
+      "category": "in_course",
+      "question": "According to the course notes, why do standard libraries like C++ std::map use red-black trees instead of AVL trees?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials",
+        "search_course_materials"
+      ],
+      "revisions": 0,
+      "latency_s": 16.37,
+      "cost_usd": 0.04108,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 553,
+          "input_tokens": 9457,
+          "output_token_details": {
+            "reasoning": 17
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 10010
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 1206,
+          "input_tokens": 10609,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 11815
+        }
+      },
+      "answer": "According to your course notes, it comes down to a tradeoff between **balance strictness** and **rebalancing cost**:\n\n- **AVL trees** keep themselves very strictly balanced — they track a balance factor (height difference between subtrees) at every node and rebalance as soon as that difference exceeds 1. This gives slightly faster lookups (tighter height bound), but it means rotations happen more frequently during insertions and deletions.\n- **Red-Black trees** use a coloring scheme (red/black nodes) with a looser set of invariants. This only bounds the height to about `2·log(n)` rather than the tighter bound AVL achieves — but because the balance requirement is looser, red-black trees need **fewer rotations on average** when inserting or deleting.\n\nSo the notes' reasoning is: since `std::map` (and similar ordered containers like Java's `TreeMap`) are general-purpose structures that need to handle frequent insertions and deletions efficiently, the reduced rebalancing cost of red-black trees outweighs the marginally worse (but still O(log n)) lookup performance compared to AVL trees.\n\nWant me to sketch out a quick diagram comparing how each tree rebalances (rotations vs. recoloring) to make the difference more concrete?"
+    },
+    {
+      "id": "in-insert-leaf",
+      "category": "in_course",
+      "question": "Where does a new node get attached when inserting into a BST?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials"
+      ],
+      "revisions": 0,
+      "latency_s": 15.76,
+      "cost_usd": 0.0315,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 366,
+          "input_tokens": 9153,
+          "output_token_details": {
+            "reasoning": 44
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 9519
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 635,
+          "input_tokens": 6361,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 6996
+        }
+      },
+      "answer": "A new node always gets attached **as a leaf**, at the spot where the search for its key would have \"fallen off\" the tree.\n\nConcretely: you start at the root and compare the new key to the current node's key — go left if it's smaller, right if it's larger — just like a search. You keep moving down until you hit an empty spot (a null child pointer). That's where the new node is attached, as a leaf, becoming the new left or right child of whatever node you were last at.\n\nSo insertion never creates internal structure changes — it just extends the tree at the bottom, preserving the BST ordering property (everything in a node's left subtree is smaller, everything in its right subtree is larger).\n\nQuick check: if you inserted the keys 5, 3, 7, 1 in that order into an empty tree, can you picture (or sketch) where each one would land?"
+    },
+    {
+      "id": "in-rb-height",
+      "category": "in_course",
+      "question": "What bound do red-black trees put on the tree's height, according to the course material?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials"
+      ],
+      "revisions": 0,
+      "latency_s": 13.56,
+      "cost_usd": 0.03107,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 341,
+          "input_tokens": 8984,
+          "output_token_details": {
+            "reasoning": 0
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 9325
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 686,
+          "input_tokens": 6258,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 6944
+        }
+      },
+      "answer": "According to the course material, red-black trees use their coloring invariants to keep the tree height bounded at approximately **2 · log(n)**, where n is the number of nodes.\n\nA bit of context on why that matters: this is the trade-off they make compared to AVL trees. AVL trees enforce a stricter balance (height difference of at most 1 between subtrees), which keeps them closer to the minimum possible height (~log n), but that strictness requires more frequent rotations. Red-black trees relax that constraint a bit — allowing the height to be somewhat larger (up to 2·log n) — in exchange for needing fewer rotations on average, which is why they're commonly used in standard library ordered containers like C++'s `std::map` and Java's `TreeMap`.\n\nDo you want me to walk through the actual red-black invariants (the rules about coloring and black-height) that produce this bound?",
+      "failures_before_rescore": [
+        "answer missing /2\\s*\\*?\\s*log/"
+      ]
+    },
+    {
+      "id": "web-avl-inventors",
+      "category": "web_fallback",
+      "question": "Who invented the AVL tree, and in what year was it published?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials",
+        "tavily_search"
+      ],
+      "revisions": 0,
+      "latency_s": 15.2,
+      "cost_usd": 0.04291,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 338,
+          "input_tokens": 14571,
+          "output_token_details": {
+            "reasoning": 34
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 14909
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 688,
+          "input_tokens": 6950,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 7638
+        }
+      },
+      "answer": "The AVL tree was invented by two Soviet mathematicians, **Georgy Adelson-Velsky** and **Evgenii Landis** — the name \"AVL\" comes from their initials. They published it in **1962** in a paper titled *\"An algorithm for the organization of information.\"* It's notable as the first self-balancing binary search tree ever devised.\n\nAre you currently studying AVL trees' rotation/balancing mechanics, or just looking into their background? Happy to dig into the rebalancing logic (left/right rotations, balance factors) if that's next on your plate.",
+      "failures_before_rescore": [
+        "expected tool not called: web_search"
+      ]
+    },
+    {
+      "id": "web-btree-databases",
+      "category": "web_fallback",
+      "question": "Why do databases use B-trees for indexes instead of binary search trees?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials",
+        "search_course_materials",
+        "search_course_materials",
+        "tavily_search"
+      ],
+      "revisions": 1,
+      "latency_s": 42.79,
+      "cost_usd": 0.097,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 1422,
+          "input_tokens": 27048,
+          "output_token_details": {
+            "reasoning": 262
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 28470
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 1995,
+          "input_tokens": 18713,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 20708
+        }
+      },
+      "answer": "The core reason comes down to **disk I/O cost**, not raw computational speed.\n\n**The problem with BSTs on disk**\nA binary search tree only has 2 children per node, so to store `n` keys it needs a tree of height ~log₂(n). That's fine when everything lives in memory, where every access costs about the same. But database indexes are usually too large to fit in memory and live on disk. Disk reads are done in fixed-size chunks called **blocks/pages** (e.g., 4KB or 16KB), and each disk access is *orders of magnitude* slower than a memory access — it involves physical seek time, not just a comparison.\n\nWith a BST, each node is tiny (just a key, two pointers, maybe a value), so one disk block can only hold one node (or very few). That means every single step down the tree — every comparison — triggers a separate, slow disk read. A BST over a billion records would need ~30 levels, i.e., ~30 disk reads per lookup. That's painfully slow when each read costs milliseseconds.\n\n**How B-trees fix this**\nA B-tree node isn't limited to 2 children — it holds many keys and many children (often hundreds), sized to exactly fill one disk block. This gives it a much higher **branching factor**, so the tree stays extremely shallow even with huge amounts of data: a B-tree over a billion records might only need 3-4 levels. Since each *node* = one disk block, descending one level = one disk read. So a lookup that would take ~30 disk reads in a BST takes only ~3-4 in a B-tree.\n\nIn short:\n- BST height ≈ log₂(n) → many levels → many slow disk reads\n- B-tree height ≈ log_b(n) with large branching factor `b` → few levels → few disk reads, and each read is used efficiently since it's \"amortized\" over many keys at once\n\nThat's the key tradeoff: BSTs minimize *comparisons*, while B-trees minimize *expensive disk accesses*, which is what actually matters for performance once data doesn't fit in memory.\n\nDoes the \"disk reads are slow and happen in fixed-size blocks\" part make sense as the driving reason, or do you want me to walk through a concrete example with numbers?",
+      "failures_before_rescore": [
+        "expected tool not called: web_search"
+      ]
+    },
+    {
+      "id": "web-splay-tree",
+      "category": "web_fallback",
+      "question": "What is a splay tree and how does it differ from an AVL tree?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials",
+        "search_course_materials",
+        "tavily_search",
+        "tavily_search",
+        "tavily_search"
+      ],
+      "revisions": 1,
+      "latency_s": 43.09,
+      "cost_usd": 0.12162,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 2292,
+          "input_tokens": 36192,
+          "output_token_details": {
+            "reasoning": 354
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 38484
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 1429,
+          "input_tokens": 19175,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 20604
+        }
+      },
+      "answer": "All claims below are now confirmed either from your course material or the sources I just checked.\n\nYour course material covers AVL and Red-Black trees, but not splay trees — so the splay tree details here come from outside sources, which I'm noting since it may go beyond what your course expects.\n\n**What a splay tree is**\n\nA splay tree is a self-adjusting binary search tree. After every access (search, insert, or delete), the accessed node is moved all the way up to the root through a sequence of rotations — this process is called **splaying**. The rotation types, depending on the node's position relative to its parent and grandparent, are:\n\n- **Zig** – a single rotation (used when the parent is the root).\n- **Zig-zig** – two rotations in the same direction, used when the node and its parent are both left children or both right children.\n- **Zig-zag** – two rotations in opposite directions, used when the node is a left child of a right child (or vice versa).\n\n**How it differs from AVL**\n\nYour course material states that AVL trees rebalance after every insertion/deletion by tracking each node's balance factor (height difference between subtrees) and rotating whenever that difference exceeds 1 — this keeps the tree's height O(log n) at all times, guaranteeing O(log n) worst-case search/insert/delete.\n\nSplay trees work differently:\n\n- **Trigger for rebalancing:** AVL rebalances based on a tracked balance factor, checked on insert/delete. A splay tree rebalances (splays) on *every* access, including plain lookups, not just insertions/deletions.\n- **Worst-case guarantee:** AVL guarantees O(log n) worst-case for every single operation. A splay tree does not — per Wikipedia, its height can become linear (e.g., after accessing all n elements in non-decreasing order), so a single operation can cost O(n) in the worst case.\n- **Amortized guarantee:** Despite the lack of a per-operation guarantee, splay trees still achieve O(log n) *amortized* time per operation over a sequence of operations (Sleator & Tarjan, 1985) — this is proven via the \"Balance Theorem.\"\n- **Extra metadata:** AVL nodes need to store a height or balance factor. Splay tree nodes don't need to store any extra balance information — splaying itself keeps the tree reasonably balanced over time.\n\nIf you'd like, I can walk through a worked example of splaying a node with a zig-zig step, or search the course material for how Red-Black trees fit alongside these two.",
+      "failures_before_rescore": [
+        "expected tool not called: web_search"
+      ]
+    },
+    {
+      "id": "web-treap",
+      "category": "web_fallback",
+      "question": "What is a treap and how does it stay balanced?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials",
+        "search_course_materials",
+        "search_course_materials",
+        "tavily_search",
+        "generate_diagram"
+      ],
+      "revisions": 0,
+      "latency_s": 41.35,
+      "cost_usd": 0.10046,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 1793,
+          "input_tokens": 28924,
+          "output_token_details": {
+            "reasoning": 253
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 30717
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 1752,
+          "input_tokens": 15924,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 17676
+        }
+      },
+      "answer": "Here's a small example treap to make it concrete: data/diagrams/treap-bst-by-key-max-heap-by-priority-8a351085.png\n\nNotice in the diagram: reading left-to-right the keys (5, 2, 1, 3, 8, 7, 9) are in sorted BST order, while top-to-bottom the priorities (90, 70/60, 40/50/30/20) always decrease — a parent's priority is never smaller than its children's. That dual structure is exactly what random priorities + rotations maintain automatically as you insert and delete.\n\nWant to walk through an actual insertion step-by-step (seeing the rotations happen), or does this cover what you needed?",
+      "failures_before_rescore": [
+        "expected tool not called: web_search"
+      ]
+    },
+    {
+      "id": "off-world-cup",
+      "category": "off_topic",
+      "question": "Who won the 2022 FIFA World Cup?",
+      "passed": false,
+      "failures": [
+        "forbidden tool called: web_search",
+        "answer contains /Argentina/"
+      ],
+      "tools_called": [
+        "tavily_search"
+      ],
+      "revisions": 2,
+      "latency_s": 15.78,
+      "cost_usd": 0.05272,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 298,
+          "input_tokens": 20090,
+          "output_token_details": {
+            "reasoning": 14
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 20388
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 649,
+          "input_tokens": 6314,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 6963
+        }
+      },
+      "answer": "Argentina won the 2022 FIFA World Cup, defeating France 4–2 on penalties after the final finished 3–3 after extra time (per Wikipedia and FIFA.com).\n\nThat said, this is outside the scope of what I can help with as your course tutor — let me know if you have a question related to your course material!",
+      "failures_before_rescore": [
+        "answer contains /Argentina/"
+      ]
+    },
+    {
+      "id": "off-cookies",
+      "category": "off_topic",
+      "question": "Can you give me a recipe for chocolate chip cookies?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [],
+      "revisions": 0,
+      "latency_s": 4.15,
+      "cost_usd": 0.01208,
+      "usage": {
+        "claude-sonnet-5": {
+          "input_tokens": 4305,
+          "output_tokens": 55,
+          "total_tokens": 4360,
+          "input_token_details": {
+            "cache_read": 0,
+            "cache_creation": 0,
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_token_details": {
+            "reasoning": 0
+          }
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 229,
+          "input_tokens": 1771,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 2000
+        }
+      },
+      "answer": "That's outside what I can help with here — I'm set up to support you with this course's material, not general recipes. If you've got a question about the course itself, I'm happy to dig in!"
+    },
+    {
+      "id": "off-capital",
+      "category": "off_topic",
+      "question": "What's the capital of Australia?",
+      "passed": false,
+      "failures": [
+        "forbidden tool called: web_search",
+        "answer contains /Canberra/"
+      ],
+      "tools_called": [
+        "tavily_search"
+      ],
+      "revisions": 2,
+      "latency_s": 14.33,
+      "cost_usd": 0.05015,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 211,
+          "input_tokens": 19564,
+          "output_token_details": {
+            "reasoning": 26
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 19775
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 597,
+          "input_tokens": 5929,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 6526
+        }
+      },
+      "answer": "The capital of Australia is Canberra, located in the Australian Capital Territory.\n\nThat said, this is outside the scope of what I help with here — if you have a question about your course material, I'm happy to dig into that with you.",
+      "failures_before_rescore": [
+        "answer contains /Canberra/"
+      ]
+    },
+    {
+      "id": "off-stock",
+      "category": "off_topic",
+      "question": "Should I buy Nvidia stock this week?",
+      "passed": true,
+      "failures": [],
+      "tools_called": [],
+      "revisions": 0,
+      "latency_s": 4.25,
+      "cost_usd": 0.01195,
+      "usage": {
+        "claude-sonnet-5": {
+          "input_tokens": 4300,
+          "output_tokens": 53,
+          "total_tokens": 4353,
+          "input_token_details": {
+            "cache_read": 0,
+            "cache_creation": 0,
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_token_details": {
+            "reasoning": 0
+          }
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 212,
+          "input_tokens": 1763,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 1975
+        }
+      },
+      "answer": "That's outside what I can help with here — I'm set up to support you with this course's material, not investment advice. Happy to help if you've got a question about something you're studying instead."
+    },
+    {
+      "id": "vis-growth-chart",
+      "category": "visual",
+      "question": "Generate a bar chart comparing O(log n) and O(n) growth for n = 10, 100, 1000, 10000.",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "generate_chart"
+      ],
+      "revisions": 0,
+      "latency_s": 10.31,
+      "cost_usd": 0.02869,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 679,
+          "input_tokens": 9143,
+          "output_token_details": {
+            "reasoning": 122
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 9822
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 271,
+          "input_tokens": 2260,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 2531
+        }
+      },
+      "answer": "Chart saved here: `data/charts/growth-rate-comparison-o-log-n-vs-o-n-372a96d5.png`\n\nA couple of notes on what it shows (using log base 2):\n\n- **O(n)** grows linearly — at n=10,000 it needs 10,000 operations.\n- **O(log n)** grows *extremely* slowly — at n=10,000 it only needs about 13.3 operations.\n\nBecause of that huge gap, the O(n) bars will dwarf the O(log n) bars visually once n gets large — that's actually the point of the comparison: it shows why algorithms like binary search (O(log n)) scale so much better than linear search (O(n)) as input size grows.\n\nWant me to connect this to a specific algorithm from the course (e.g., binary search vs. linear search) to make the comparison more concrete?"
+    },
+    {
+      "id": "vis-insert-diagram",
+      "category": "visual",
+      "question": "Draw a diagram of how inserting the key 7 into a BST with root 10, left child 5 and right child 15 works.",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials",
+        "generate_diagram"
+      ],
+      "revisions": 0,
+      "latency_s": 22.9,
+      "cost_usd": 0.05287,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 1136,
+          "input_tokens": 15567,
+          "output_token_details": {
+            "reasoning": 224
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 16703
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 699,
+          "input_tokens": 6884,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 7583
+        }
+      },
+      "answer": "Here's the diagram: `data/diagrams/inserting-key-7-into-bst-root-10-left-5-right-15-8ccc10c0.png`\n\n**How it works, step by step:**\n1. Start at the root, **10**. Since 7 < 10, move to the left child.\n2. Arrive at **5**. Since 7 > 5, move to the right child — but 5 has no right child, so that's a null/empty spot.\n3. Attach **7** there as a new leaf, as the right child of 5.\n\nNotice the path taken (10 → 5 → empty spot) is exactly the same path you'd follow if you were just *searching* for 7 — insertion in a BST is really \"search for the key, and when you fall off the tree, that's where it goes.\"\n\nOne thing worth checking your understanding on: if you next inserted the key 6, can you predict where it would land, following the same logic?"
+    },
+    {
+      "id": "vis-delete-diagram",
+      "category": "visual",
+      "question": "Make a diagram showing the three cases of deleting a node from a BST.",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials",
+        "generate_diagram"
+      ],
+      "revisions": 0,
+      "latency_s": 35.4,
+      "cost_usd": 0.06729,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 2469,
+          "input_tokens": 16148,
+          "output_token_details": {
+            "reasoning": 1112
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 18617
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 740,
+          "input_tokens": 6603,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 7343
+        }
+      },
+      "answer": "Here's the diagram: `data/diagrams/three-cases-of-bst-node-deletion-d1ccabd5.png`\n\nIt shows the three deletion cases from your course material:\n\n1. **Leaf node** (red, no children) — just remove it directly, parent's pointer becomes null.\n2. **One child** — the node being deleted (red) is simply replaced by its single child; everything else in the tree stays put.\n3. **Two children** — the trickiest case. The node (red, value 10) can't just be removed because both its subtrees need a home. Instead, you find its **in-order successor** — the smallest value in its right subtree (here, 17 — found by going right once to 20, then left as far as possible) — copy that value into the node being \"deleted,\" and then delete the successor node from its original spot (which is now guaranteed to be a leaf or have at most one child, so it falls into case 1 or 2).\n\nDoes the logic of why the two-children case needs a successor make sense, or do you want to walk through why that specific node is always safe to remove?"
+    },
+    {
+      "id": "vis-comparisons-chart",
+      "category": "visual",
+      "question": "Plot a chart of how many comparisons a search needs in a balanced vs a degenerate BST for n = 16, 256 and 4096.",
+      "passed": true,
+      "failures": [],
+      "tools_called": [
+        "search_course_materials",
+        "generate_chart"
+      ],
+      "revisions": 0,
+      "latency_s": 22.4,
+      "cost_usd": 0.05344,
+      "usage": {
+        "claude-sonnet-5": {
+          "output_tokens": 1065,
+          "input_tokens": 15804,
+          "output_token_details": {
+            "reasoning": 242
+          },
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 16869
+        },
+        "claude-haiku-4-5-20251001": {
+          "output_tokens": 823,
+          "input_tokens": 7069,
+          "input_token_details": {
+            "ephemeral_1h_input_tokens": 0,
+            "cache_creation": 0,
+            "cache_read": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "total_tokens": 7892
+        }
+      },
+      "answer": "Chart saved here: `data/charts/bst-search-comparisons-balanced-vs-degenerate-99d24e41.png`\n\nA couple of things worth noticing when you look at it:\n\n1. **The gap explodes as n grows.** At n=16 the difference (4 vs 16) looks modest, but by n=4096 it's 12 vs 4096 — the degenerate bar will dwarf the balanced one visually, which is exactly the point: O(log n) barely grows while O(n) grows linearly.\n2. **Why the degenerate case happens**: if you insert keys in already-sorted order, every new node becomes the right child of the previous one (or all left children), so the \"tree\" is really just a linked list — no branching to cut the search space in half.\n\nDoes it make sense why log₂(n) is the relevant formula for the balanced case (i.e., why each comparison roughly halves the remaining search space)? Or would it help to walk through an example search on a small balanced tree to see where that count of 4 comparisons for n=16 comes from?"
+    }
+  ]
+}
